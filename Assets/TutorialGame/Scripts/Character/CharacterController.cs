@@ -1,32 +1,36 @@
 using UnityEngine;
 
-[RequireComponent(typeof(UnityEngine.CharacterController))]
-public class CharacterControllerTDD : MonoBehaviour
+[RequireComponent(typeof(Rigidbody))]
+public class RigidbodyCharacterController : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private float _walkForwardSpeed = 3f;
     [SerializeField] private float _walkBackwardSpeed = 1f;
 
-    [Header("Animations")] [SerializeField]
-    private float _blendAnimationSpeed = 1;
-    
+    [Header("Animations")]
+    [SerializeField] private float _blendAnimationSpeed = 1f;
     [SerializeField] private Animator _animator;
     [SerializeField] private string _animatorParamMoveYName = "MoveY";
 
-    private UnityEngine.CharacterController _characterController;
+    private Rigidbody _rigidbody;
     private Vector2 _input;
     private Vector3 _moveDirection;
 
     private void Awake()
     {
-        _characterController = GetComponent<UnityEngine.CharacterController>();
+        _rigidbody = GetComponent<Rigidbody>();
+        _rigidbody.constraints = RigidbodyConstraints.FreezeRotation; // Щоб не падало
     }
 
     private void Update()
     {
         ReadInput();
-        Move();
         Animate();
+    }
+
+    private void FixedUpdate()
+    {
+        Move();
     }
 
     private void ReadInput()
@@ -37,9 +41,12 @@ public class CharacterControllerTDD : MonoBehaviour
     private void Move()
     {
         float currentSpeed = _input.y < 0 ? _walkBackwardSpeed : _walkForwardSpeed;
-
         _moveDirection = new Vector3(_input.x, 0f, _input.y) * currentSpeed;
-        _characterController.Move(_moveDirection * Time.deltaTime);
+
+        Vector3 newVelocity = _moveDirection;
+        newVelocity.y = _rigidbody.linearVelocity.y; // залишити гравітацію
+
+        _rigidbody.linearVelocity = newVelocity;
     }
 
     private void Animate()
